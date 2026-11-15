@@ -27,3 +27,30 @@ doc/api/
 
 .flutter-plugins
 .flutter-plugins-dependencies
+
+# .env.example boleh di-commit (tanpa kunci asli)
+!.env.example
+
+# Bawaan Flutter
+.DS_Store
+.atom/
+.build/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+*.iml
+*.ipr
+*.iws
+.idea/
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+/coverage/
+app.*.symbols
+app.*.map.json
+/android/app/debug
+/android/app/profile
+/android/app/release
