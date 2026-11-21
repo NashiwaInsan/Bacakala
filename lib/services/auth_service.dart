@@ -104,6 +104,47 @@ class AuthService {
     }
   }
 
+  /// Ganti kata sandi akun yang sedang login.
+  /// Kata sandi lama diperiksa dulu dengan masuk ulang, supaya orang lain yang
+  /// memegang HP yang sedang terbuka tidak bisa mengganti kata sandinya.
+  Future<void> changePassword(String lama, String baru) async {
+    final email = currentUser?.email;
+    if (email == null) {
+      throw const ServiceException('Sesi berakhir, silakan masuk lagi');
+    }
+
+    try {
+      await _client.auth.signInWithPassword(email: email, password: lama);
+    } on AuthException catch (e) {
+      final salah =
+          e.code == 'invalid_credentials' ||
+          e.message.toLowerCase().contains('invalid login credentials');
+      if (salah) throw const ServiceException('Kata sandi lama salah');
+      throw ServiceException.from(e);
+    } catch (e) {
+      throw ServiceException.from(e);
+    }
+
+    try {
+      await _client.auth.updateUser(UserAttributes(password: baru));
+    } on AuthException catch (e) {
+      if (e.code == 'same_password') {
+        throw const ServiceException(
+          'Kata sandi baru harus berbeda dari yang lama',
+        );
+      }
+      final pesan = ServiceException.from(e).message;
+      // Pesan umum untuk AuthException adalah untuk login, tidak cocok di sini.
+      throw ServiceException(
+        pesan == 'Gagal masuk, coba lagi'
+            ? 'Gagal mengganti kata sandi, coba lagi'
+            : pesan,
+      );
+    } catch (e) {
+      throw ServiceException.from(e);
+    }
+  }
+
   Future<void> signOut() async {
     try {
       await _client.auth.signOut();

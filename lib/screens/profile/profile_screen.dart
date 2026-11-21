@@ -6,6 +6,7 @@ import '../../services/book_service.dart';
 import '../../services/profile_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/bottom_nav_bar.dart';
+import 'change_password_screen.dart';
 
 /// Halaman Profil: data akun, target tahunan, ubah nama, tentang, dan keluar.
 class ProfileScreen extends StatefulWidget {
@@ -195,6 +196,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
     if (tersimpan && mounted) _snack('Target diperbarui');
+  }
+
+  Future<void> _gantiKataSandi() async {
+    final berhasil = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
+    );
+    if (berhasil == true && mounted) _snack('Kata sandi diperbarui');
   }
 
   Future<void> _tentang() {
@@ -442,6 +450,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const Divider(height: 1, color: AppColors.border),
           _menuItem(
+            icon: Icons.key_outlined,
+            judul: 'Ganti kata sandi',
+            onTap: _gantiKataSandi,
+          ),
+          const Divider(height: 1, color: AppColors.border),
+          _menuItem(
             icon: Icons.info_outline,
             judul: 'Tentang Bacakala',
             subjudul: 'Versi 0.1 · Kelompok 4',
@@ -455,7 +469,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _menuItem({
     required IconData icon,
     required String judul,
-    required String subjudul,
+    String? subjudul,
     required VoidCallback onTap,
   }) {
     return InkWell(
@@ -480,7 +494,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(judul, style: AppText.bodyStrong),
-                  Text(subjudul, style: AppText.caption),
+                  if (subjudul != null) Text(subjudul, style: AppText.caption),
                 ],
               ),
             ),
