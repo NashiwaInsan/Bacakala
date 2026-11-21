@@ -135,7 +135,11 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: BottomNavBar(
         currentIndex: 0,
         onTap: (i) {
-          if (i != 0) _segeraHadir();
+          if (i == 4) {
+            Navigator.pushNamed(context, '/profile');
+          } else if (i != 0) {
+            _segeraHadir();
+          }
         },
       ),
       body: SafeArea(
