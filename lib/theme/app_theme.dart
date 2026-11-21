@@ -25,6 +25,8 @@ class AppColors {
   static const coverDefault = Color(0xFF1F4E5F); // sampul placeholder
   static const coverText = Color(0xFFF1EDE3); // teks krem di sampul
 
+  static const danger = Color(0xFFB5532C); // tombol Keluar
+
   /// Pasangan (warna buku, warna pita) untuk ilustrasi rak di halaman login.
   static const shelfBooks = <List<Color>>[
     [Color(0xFF1F4E5F), Color(0xFFB3BBB0)],
