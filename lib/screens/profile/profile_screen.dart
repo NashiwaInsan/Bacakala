@@ -5,8 +5,10 @@ import '../../services/auth_service.dart';
 import '../../services/book_service.dart';
 import '../../services/profile_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/avatar_circle.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import 'change_password_screen.dart';
+import 'edit_profile_screen.dart';
 
 /// Halaman Profil: data akun, target tahunan, ubah nama, tentang, dan keluar.
 class ProfileScreen extends StatefulWidget {
@@ -151,26 +153,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return ok == true;
   }
 
-  Future<void> _ubahNama() async {
-    final tersimpan = await _bukaSheet(
-      _EditSheet(
-        judul: 'Ubah nama',
-        label: 'Nama',
-        nilaiAwal: _profile?.nama ?? '',
-        keyboardType: TextInputType.name,
-        validator: (v) {
-          final t = v.trim();
-          if (t.isEmpty) return 'Nama tidak boleh kosong';
-          if (t.length > 50) return 'Maksimal 50 karakter';
-          return null;
-        },
-        onSave: (v) async {
-          final baru = await _profileService.updateProfile(nama: v);
-          if (mounted) setState(() => _profile = baru);
-        },
-      ),
+  Future<void> _ubahProfil() async {
+    final profil = _profile;
+    if (profil == null) return;
+    final baru = await Navigator.of(context).push<Profile>(
+      MaterialPageRoute(builder: (_) => EditProfileScreen(profil: profil)),
     );
-    if (tersimpan && mounted) _snack('Nama diperbarui');
+    if (baru != null && mounted) {
+      setState(() => _profile = baru);
+      _snack('Profil diperbarui');
+    }
   }
 
   Future<void> _ubahTarget() async {
@@ -351,16 +343,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final sejak = _membacaSejak;
     return Row(
       children: [
-        Container(
-          width: 56,
-          height: 56,
-          alignment: Alignment.center,
-          decoration: const BoxDecoration(
-            color: AppColors.primary,
-            shape: BoxShape.circle,
-          ),
-          child: Text(_inisial, style: AppText.avatar.copyWith(fontSize: 22)),
-        ),
+        AvatarCircle(inisial: _inisial, url: _profile?.avatarUrl, size: 56),
         const SizedBox(width: 14),
         Expanded(
           child: Column(
@@ -445,8 +428,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _menuItem(
             icon: Icons.person_outline,
             judul: 'Ubah profil',
-            subjudul: 'Nama',
-            onTap: _ubahNama,
+            subjudul: 'Nama dan foto',
+            onTap: _ubahProfil,
           ),
           const Divider(height: 1, color: AppColors.border),
           _menuItem(
