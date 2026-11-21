@@ -4,11 +4,13 @@ import '../../models/profile.dart';
 import '../../services/auth_service.dart';
 import '../../services/book_service.dart';
 import '../../services/profile_service.dart';
+import '../../services/reminder_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/avatar_circle.dart';
 import '../../widgets/bottom_nav_bar.dart';
 import 'change_password_screen.dart';
 import 'edit_profile_screen.dart';
+import 'reminder_screen.dart';
 
 /// Halaman Profil: data akun, target tahunan, ubah nama, tentang, dan keluar.
 class ProfileScreen extends StatefulWidget {
@@ -31,6 +33,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Profile? _profile;
   int _selesai = 0;
   ReadingSummary? _ringkasan;
+  ReminderSetting? _pengingat;
 
   @override
   void initState() {
@@ -64,11 +67,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ringkasan = null;
       }
 
+      final pengingat = await ReminderService().muat();
+
       if (!mounted) return;
       setState(() {
         _profile = profil;
         _selesai = selesai;
         _ringkasan = ringkasan;
+        _pengingat = pengingat;
       });
     } on ServiceException catch (e) {
       if (mounted) setState(() => _error = e.message);
@@ -188,6 +194,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
     if (tersimpan && mounted) _snack('Target diperbarui');
+  }
+
+  Future<void> _aturPengingat() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(builder: (_) => const ReminderScreen()),
+    );
+    // Muat ulang agar subjudul menu sesuai pengaturan terbaru.
+    final pengingat = await ReminderService().muat();
+    if (mounted) setState(() => _pengingat = pengingat);
+  }
+
+  /// Subjudul menu Pengingat: "Setiap hari, 19.30", "Mati", atau keterangan
+  /// bahwa fitur ini hanya untuk Android (misalnya saat dibuka di browser).
+  String get _subjudulPengingat {
+    if (!ReminderService.didukung) return 'Tersedia di aplikasi Android';
+    final p = _pengingat;
+    if (p == null || !p.aktif) return 'Mati';
+    return 'Setiap hari, ${ReminderService.formatJam(p.jam, p.menit)}';
   }
 
   Future<void> _gantiKataSandi() async {
@@ -430,6 +454,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             judul: 'Ubah profil',
             subjudul: 'Nama dan foto',
             onTap: _ubahProfil,
+          ),
+          const Divider(height: 1, color: AppColors.border),
+          _menuItem(
+            icon: Icons.notifications_none,
+            judul: 'Pengingat membaca',
+            subjudul: _subjudulPengingat,
+            onTap: _aturPengingat,
           ),
           const Divider(height: 1, color: AppColors.border),
           _menuItem(
