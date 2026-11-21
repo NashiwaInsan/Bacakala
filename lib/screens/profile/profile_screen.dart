@@ -27,6 +27,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _error;
   Profile? _profile;
   int _selesai = 0;
+  ReadingSummary? _ringkasan;
 
   @override
   void initState() {
@@ -52,10 +53,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         selesai = 0;
       }
 
+      // Ringkasan per status juga pelengkap: kalau gagal, barisnya disembunyikan.
+      ReadingSummary? ringkasan;
+      try {
+        ringkasan = await _profileService.getReadingSummary();
+      } on ServiceException {
+        ringkasan = null;
+      }
+
       if (!mounted) return;
       setState(() {
         _profile = profil;
         _selesai = selesai;
+        _ringkasan = ringkasan;
       });
     } on ServiceException catch (e) {
       if (mounted) setState(() => _error = e.message);
@@ -91,6 +101,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   int get _target {
     final t = _profile?.targetTahunan ?? 0;
     return t > 0 ? t : 12;
+  }
+
+  /// Contoh: "4 selesai · 2 sedang dibaca · 1 di daftar tunggu".
+  /// Kalau ringkasan gagal dimuat, dipakai teks sederhana dari angka target.
+  String get _teksRingkasan {
+    final r = _ringkasan;
+    if (r == null) return '$_selesai dari $_target buku selesai';
+    return '${r.selesai} selesai · ${r.sedangDibaca} sedang dibaca · '
+        '${r.inginDibaca} di daftar tunggu';
   }
 
   String? get _membacaSejak {
@@ -404,7 +423,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           const SizedBox(height: 10),
-          Text('$_selesai dari $_target buku selesai', style: AppText.caption),
+          Text(_teksRingkasan, style: AppText.caption),
         ],
       ),
     );
