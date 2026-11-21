@@ -6,6 +6,7 @@ import '../../services/auth_service.dart';
 import '../../services/book_service.dart';
 import '../../services/profile_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/avatar_circle.dart';
 import '../../widgets/book_card.dart';
 import '../../widgets/bottom_nav_bar.dart';
 
@@ -67,39 +68,6 @@ class _HomeScreenState extends State<HomeScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(const SnackBar(content: Text('Segera hadir')));
-  }
-
-  /// Logout lewat ketuk lama pada avatar
-  Future<void> _konfirmasiKeluar() async {
-    final yakin = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Keluar dari akun?'),
-        content: const Text('Kamu perlu masuk lagi untuk membuka Beranda.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Batal'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Keluar'),
-          ),
-        ],
-      ),
-    );
-    if (yakin != true) return;
-
-    try {
-      await _auth.signOut();
-    } on ServiceException catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.message)));
-      return;
-    }
-    if (!mounted) return;
-    Navigator.of(context).pushNamedAndRemoveUntil('/login', (_) => false);
   }
 
   // --- Helper tampilan ---
@@ -185,15 +153,6 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Text('Coba lagi', style: AppText.link),
             ),
           ),
-          Center(
-            child: TextButton(
-              onPressed: _konfirmasiKeluar,
-              child: Text(
-                'Keluar dari akun',
-                style: AppText.link.copyWith(color: AppColors.textSecondary),
-              ),
-            ),
-          ),
         ],
       );
     }
@@ -238,20 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         const SizedBox(width: 12),
-        // Ketuk lama untuk keluar
-        GestureDetector(
-          onLongPress: _konfirmasiKeluar,
-          child: Container(
-            width: 46,
-            height: 46,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: AppColors.primary,
-              shape: BoxShape.circle,
-            ),
-            child: Text(_inisial, style: AppText.avatar),
-          ),
-        ),
+        AvatarCircle(inisial: _inisial, url: _profile?.avatarUrl, size: 46),
       ],
     );
   }

@@ -4,8 +4,13 @@ import '../../models/profile.dart';
 import '../../services/auth_service.dart';
 import '../../services/book_service.dart';
 import '../../services/profile_service.dart';
+import '../../services/reminder_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/avatar_circle.dart';
 import '../../widgets/bottom_nav_bar.dart';
+import 'change_password_screen.dart';
+import 'edit_profile_screen.dart';
+import 'reminder_screen.dart';
 
 /// Halaman Profil: data akun, target tahunan, ubah nama, tentang, dan keluar.
 class ProfileScreen extends StatefulWidget {
@@ -28,6 +33,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Profile? _profile;
   int _selesai = 0;
   ReadingSummary? _ringkasan;
+  ReminderSetting? _pengingat;
 
   @override
   void initState() {
@@ -61,11 +67,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ringkasan = null;
       }
 
+      final pengingat = await ReminderService().muat();
+
       if (!mounted) return;
       setState(() {
         _profile = profil;
         _selesai = selesai;
         _ringkasan = ringkasan;
+        _pengingat = pengingat;
       });
     } on ServiceException catch (e) {
       if (mounted) setState(() => _error = e.message);
@@ -150,26 +159,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return ok == true;
   }
 
-  Future<void> _ubahNama() async {
-    final tersimpan = await _bukaSheet(
-      _EditSheet(
-        judul: 'Ubah nama',
-        label: 'Nama',
-        nilaiAwal: _profile?.nama ?? '',
-        keyboardType: TextInputType.name,
-        validator: (v) {
-          final t = v.trim();
-          if (t.isEmpty) return 'Nama tidak boleh kosong';
-          if (t.length > 50) return 'Maksimal 50 karakter';
-          return null;
-        },
-        onSave: (v) async {
-          final baru = await _profileService.updateProfile(nama: v);
-          if (mounted) setState(() => _profile = baru);
-        },
-      ),
+  Future<void> _ubahProfil() async {
+    final profil = _profile;
+    if (profil == null) return;
+    final baru = await Navigator.of(context).push<Profile>(
+      MaterialPageRoute(builder: (_) => EditProfileScreen(profil: profil)),
     );
-    if (tersimpan && mounted) _snack('Nama diperbarui');
+    if (baru != null && mounted) {
+      setState(() => _profile = baru);
+      _snack('Profil diperbarui');
+    }
   }
 
   Future<void> _ubahTarget() async {
@@ -195,6 +194,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
     if (tersimpan && mounted) _snack('Target diperbarui');
+  }
+
+  Future<void> _aturPengingat() async {
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(builder: (_) => const ReminderScreen()),
+    );
+    // Muat ulang agar subjudul menu sesuai pengaturan terbaru.
+    final pengingat = await ReminderService().muat();
+    if (mounted) setState(() => _pengingat = pengingat);
+  }
+
+  /// Subjudul menu Pengingat: "Setiap hari, 19.30", "Mati", atau keterangan
+  /// bahwa fitur ini hanya untuk Android (misalnya saat dibuka di browser).
+  String get _subjudulPengingat {
+    if (!ReminderService.didukung) return 'Tersedia di aplikasi Android';
+    final p = _pengingat;
+    if (p == null || !p.aktif) return 'Mati';
+    return 'Setiap hari, ${ReminderService.formatJam(p.jam, p.menit)}';
+  }
+
+  Future<void> _gantiKataSandi() async {
+    final berhasil = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
+    );
+    if (berhasil == true && mounted) _snack('Kata sandi diperbarui');
   }
 
   Future<void> _tentang() {
@@ -343,16 +367,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final sejak = _membacaSejak;
     return Row(
       children: [
-        Container(
-          width: 56,
-          height: 56,
-          alignment: Alignment.center,
-          decoration: const BoxDecoration(
-            color: AppColors.primary,
-            shape: BoxShape.circle,
-          ),
-          child: Text(_inisial, style: AppText.avatar.copyWith(fontSize: 22)),
-        ),
+        AvatarCircle(inisial: _inisial, url: _profile?.avatarUrl, size: 56),
         const SizedBox(width: 14),
         Expanded(
           child: Column(
@@ -437,8 +452,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _menuItem(
             icon: Icons.person_outline,
             judul: 'Ubah profil',
-            subjudul: 'Nama',
-            onTap: _ubahNama,
+            subjudul: 'Nama dan foto',
+            onTap: _ubahProfil,
+          ),
+          const Divider(height: 1, color: AppColors.border),
+          _menuItem(
+            icon: Icons.notifications_none,
+            judul: 'Pengingat membaca',
+            subjudul: _subjudulPengingat,
+            onTap: _aturPengingat,
+          ),
+          const Divider(height: 1, color: AppColors.border),
+          _menuItem(
+            icon: Icons.key_outlined,
+            judul: 'Ganti kata sandi',
+            onTap: _gantiKataSandi,
           ),
           const Divider(height: 1, color: AppColors.border),
           _menuItem(
@@ -455,7 +483,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _menuItem({
     required IconData icon,
     required String judul,
-    required String subjudul,
+    String? subjudul,
     required VoidCallback onTap,
   }) {
     return InkWell(
@@ -480,7 +508,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(judul, style: AppText.bodyStrong),
-                  Text(subjudul, style: AppText.caption),
+                  if (subjudul != null) Text(subjudul, style: AppText.caption),
                 ],
               ),
             ),

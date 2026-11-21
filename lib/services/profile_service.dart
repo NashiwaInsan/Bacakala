@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/profile.dart';
@@ -64,12 +66,18 @@ class ProfileService {
     }
   }
 
-  /// Ubah nama dan/atau target buku tahunan milik user yang sedang login.
+  /// Ubah nama, target buku tahunan, dan/atau foto milik user yang login.
   /// Hanya kolom yang diisi (tidak null) yang diubah.
+  /// Isi [hapusFoto] dengan true untuk mengosongkan kolom foto.
   /// Mengembalikan profil terbaru dari database.
-  Future<Profile> updateProfile({String? nama, int? targetTahunan}) async {
+  Future<Profile> updateProfile({
+    String? nama,
+    int? targetTahunan,
+    String? avatarUrl,
+    bool hapusFoto = false,
+  }) async {
     assert(
-      nama != null || targetTahunan != null,
+      nama != null || targetTahunan != null || avatarUrl != null || hapusFoto,
       'Isi minimal satu kolom yang diubah',
     );
     try {
@@ -78,6 +86,11 @@ class ProfileService {
         'nama': ?nama?.trim(),
         'target_tahunan': ?targetTahunan,
       };
+      if (hapusFoto) {
+        perubahan['avatar_url'] = null;
+      } else if (avatarUrl != null) {
+        perubahan['avatar_url'] = avatarUrl;
+      }
 
       // .single() gagal jika tidak ada baris yang terubah (mis. baris profil
       // belum dibuat trigger, atau RLS menolak), sehingga error tidak diam-diam.
@@ -92,5 +105,49 @@ class ProfileService {
     } catch (e) {
       throw ServiceException.from(e);
     }
+  }
+
+  static const _bucket = 'avatars';
+
+  /// Satu file per user: `<user_id>/avatar`. Mengunggah ulang menimpa file lama.
+  String get _pathFoto => '${_client.auth.currentUser!.id}/avatar';
+
+  /// Unggah foto profil ke Storage dan kembalikan tautan publiknya.
+  /// Memakai bytes (bukan File) supaya jalan di Android maupun browser.
+  /// Tautan diberi `?v=` agar gambar lama di cache tidak ikut tampil.
+  Future<String> uploadAvatar(Uint8List bytes, String namaFile) async {
+    try {
+      await _client.storage
+          .from(_bucket)
+          .uploadBinary(
+            _pathFoto,
+            bytes,
+            fileOptions: FileOptions(
+              upsert: true,
+              contentType: _tipeGambar(namaFile),
+            ),
+          );
+      final url = _client.storage.from(_bucket).getPublicUrl(_pathFoto);
+      return '$url?v=${DateTime.now().millisecondsSinceEpoch}';
+    } catch (e) {
+      throw ServiceException.from(e);
+    }
+  }
+
+  /// Hapus file foto dari Storage. Kolom `avatar_url` dikosongkan lewat
+  /// [updateProfile] dengan `hapusFoto: true`.
+  Future<void> deleteAvatarFile() async {
+    try {
+      await _client.storage.from(_bucket).remove([_pathFoto]);
+    } catch (e) {
+      throw ServiceException.from(e);
+    }
+  }
+
+  String _tipeGambar(String namaFile) {
+    final nama = namaFile.toLowerCase();
+    if (nama.endsWith('.png')) return 'image/png';
+    if (nama.endsWith('.webp')) return 'image/webp';
+    return 'image/jpeg';
   }
 }
