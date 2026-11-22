@@ -39,13 +39,13 @@ Banyak orang ingin membaca lebih rutin, tetapi kesulitan menjaga konsistensi, ti
 | Fitur | Deskripsi | Status |
 |---|---|:---:|
 | 🔐 Autentikasi | Daftar, masuk, dan sesi login tersimpan (Supabase Auth) | ✅ |
-| 🏠 Beranda | Buku yang sedang dibaca, target tahunan, ringkasan mingguan | 🚧 |
+| 🏠 Beranda | Buku yang sedang dibaca, target tahunan, ringkasan mingguan | ✅ |
 | 📖 Rak Buku | Rak per status (Ingin Dibaca, Sedang Dibaca, Selesai), cari judul, tambah buku dengan sampul opsional | ✅ |
 | 🔎 Detail Buku | Progres halaman, riwayat sesi, dan catatan per buku | ✅ |
 | ⏱️ Sesi Membaca | Timer membaca dengan pembaruan progres otomatis | ⏳ |
-| 📝 Catatan & Kutipan | Simpan kutipan dan catatan pribadi beserta nomor halaman | ⏳ |
-| 📊 Statistik | Total waktu membaca, grafik mingguan, waktu membaca favorit | ⏳ |
-| 👥 Klub Baca | Baca satu buku bersama, pantau progres anggota, dan berdiskusi | ⏳ |
+| 📝 Catatan & Kutipan | Simpan kutipan dan catatan pribadi beserta nomor halaman | ✅ |
+| 📊 Statistik | Total waktu membaca, grafik mingguan, waktu membaca favorit | ✅ |
+| 👥 Klub Baca | Baca satu buku bersama, pantau progres anggota, dan berdiskusi | ✅✅ |
 | 👤 Profil | Ringkasan buku, ubah nama dan foto, ganti kata sandi, pengingat membaca, dan logout | ✅ |
 
 <sub>✅ selesai · 🚧 sedang dikerjakan · ⏳ direncanakan</sub>
