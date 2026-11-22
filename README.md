@@ -45,7 +45,7 @@ Banyak orang ingin membaca lebih rutin, tetapi kesulitan menjaga konsistensi, ti
 | ⏱️ Sesi Membaca | Timer membaca dengan pembaruan progres otomatis | ⏳ |
 | 📝 Catatan & Kutipan | Simpan kutipan dan catatan pribadi beserta nomor halaman | ✅ |
 | 📊 Statistik | Total waktu membaca, grafik mingguan, waktu membaca favorit | ✅ |
-| 👥 Klub Baca | Baca satu buku bersama, pantau progres anggota, dan berdiskusi | ✅✅ |
+| 👥 Klub Baca | Baca satu buku bersama, pantau progres anggota, dan berdiskusi | ✅ |
 | 👤 Profil | Ringkasan buku, ubah nama dan foto, ganti kata sandi, pengingat membaca, dan logout | ✅ |
 
 <sub>✅ selesai · 🚧 sedang dikerjakan · ⏳ direncanakan</sub>
