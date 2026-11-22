@@ -9,6 +9,13 @@ android {
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
+    androidResources {
+        // AAPT mengabaikan berkas berawalan titik secara bawaan, sehingga
+        // aset `.env` (flutter_dotenv) tidak ikut masuk APK tanpa aturan ini.
+        ignoreAssetsPattern =
+            "!.svn:!.git:!.ds_store:!*.scc:<dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"
+    }
+
     compileOptions {
         // Diperlukan flutter_local_notifications (pengingat membaca)
         isCoreLibraryDesugaringEnabled = true
