@@ -42,7 +42,7 @@ Banyak orang ingin membaca lebih rutin, tetapi kesulitan menjaga konsistensi, ti
 |---|---|:---:|
 | 🔐 Autentikasi | Daftar, masuk, dan sesi login tersimpan (Supabase Auth) | ✅ |
 | 🏠 Beranda | Buku yang sedang dibaca, target tahunan, ringkasan mingguan | 🚧 |
-| 📖 Rak Buku | Kelola buku dengan status Ingin Dibaca, Sedang Dibaca, Selesai | ⏳ |
+| 📖 Rak Buku | Kelola buku dengan status Ingin Dibaca, Sedang Dibaca, Selesai | 🚧 |
 | 🔎 Detail Buku | Progres halaman, riwayat sesi, dan catatan per buku | ⏳ |
 | ⏱️ Sesi Membaca | Timer membaca dengan pembaruan progres otomatis | ⏳ |
 | 📝 Catatan & Kutipan | Simpan kutipan dan catatan pribadi beserta nomor halaman | ⏳ |
