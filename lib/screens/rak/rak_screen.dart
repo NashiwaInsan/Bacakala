@@ -6,6 +6,7 @@ import '../../services/book_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/book_cover.dart';
 import '../../widgets/bottom_nav_bar.dart';
+import 'tambah_buku_screen.dart' show TambahBukuHasil;
 
 /// Status buku di rak: (nilai di database, label di layar).
 const statusRak = <(String, String)>[
@@ -66,9 +67,24 @@ class _RakScreenState extends State<RakScreen> {
       ..showSnackBar(SnackBar(content: Text(pesan)));
   }
 
+  /// Buka Tambah buku. Setelah tersimpan: pindah ke tab status buku baru,
+  /// beri tahu pengguna, lalu muat ulang rak.
   Future<void> _bukaTambah() async {
-    final hasil = await Navigator.of(context).pushNamed('/rak/tambah');
+    final hasil = await Navigator.of(context)
+        .pushNamed<TambahBukuHasil>('/rak/tambah');
     if (hasil == null || !mounted) return;
+
+    final tab = statusRak.indexWhere((s) => s.$1 == hasil.buku.status);
+    _cariCtrl.clear();
+    setState(() {
+      if (tab >= 0) _tab = tab;
+      _kataCari = '';
+    });
+    _snack(
+      hasil.sampulGagal
+          ? 'Buku ditambahkan ke rak, tapi sampul gagal diunggah'
+          : 'Buku ditambahkan ke rak',
+    );
     await _load();
   }
 
