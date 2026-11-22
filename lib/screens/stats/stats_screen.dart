@@ -1,11 +1,12 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../models/reading_stats.dart';
 import '../../services/stats_service.dart';
 import '../../utils/date_label.dart';
+import '../../widgets/bottom_nav_bar.dart';
 
-/// Halaman Statistik (Bab 2.2.7). Dipakai sebagai isi tab Statistik
-/// di bottom navigation, jadi tidak punya bottom nav sendiri.
+/// Halaman Statistik (Bab 2.2.7), dibuka dari menu Statistik
+/// di bottom navigation (route '/statistik').
 class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key, this.onStartSession});
 
@@ -45,6 +46,7 @@ class _StatsScreenState extends State<StatsScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      bottomNavigationBar: const BottomNavBar(currentIndex: BottomNavBar.statistikIndex),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _reload,

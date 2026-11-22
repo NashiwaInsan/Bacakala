@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import '../../models/club.dart';
@@ -190,6 +190,7 @@ class _ClubFormScreenState extends State<ClubFormScreen> {
             _PickerTile(
               onTap: _pickBook,
               hasError: _bookError,
+              trailing: const Icon(Icons.chevron_right),
               child: _book == null
                   ? Text('Pilih dari rak buku', style: theme.textTheme.bodyLarge?.copyWith(
                       color: colors.onSurfaceVariant))
@@ -201,20 +202,19 @@ class _ClubFormScreenState extends State<ClubFormScreen> {
                             style: theme.textTheme.bodySmall),
                       ],
                     ),
-              trailing: const Icon(Icons.chevron_right),
             ),
             const SizedBox(height: 18),
             _FieldLabel('Target selesai', error: _targetError ? 'Pilih tanggal target' : null),
             _PickerTile(
               onTap: _pickTarget,
               hasError: _targetError,
+              trailing: const Icon(Icons.calendar_today_outlined, size: 20),
               child: Text(
                 _target == null ? 'Pilih tanggal' : DateLabel.full(_target!),
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: _target == null ? colors.onSurfaceVariant : null,
                 ),
               ),
-              trailing: const Icon(Icons.calendar_today_outlined, size: 20),
             ),
             if (_paceText != null) ...[
               const SizedBox(height: 8),

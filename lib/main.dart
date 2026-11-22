@@ -8,8 +8,10 @@ import 'screens/home/home_screen.dart';
 import 'screens/rak/rak_screen.dart';
 import 'screens/rak/tambah_buku_screen.dart';
 import 'screens/splash_screen.dart';
+import 'screens/stats/stats_screen.dart';
+import 'screens/clubs/club_list_screen.dart';
+import 'screens/clubs/club_form_screen.dart';
 import 'theme/app_theme.dart';
-
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,6 +55,12 @@ class BacakalaApp extends StatelessWidget {
         '/profile': (_) => const ProfileScreen(showBottomNav: true),
         '/rak': (_) => const RakScreen(),
         '/rak/tambah': (_) => const TambahBukuScreen(),
+        '/klub': (_) => const ClubListScreen(),
+        '/klub/buat': (_) => const ClubFormScreen(),
+        '/statistik': (context) => StatsScreen(
+              onStartSession: () =>
+                  Navigator.pushReplacementNamed(context, '/rak'),
+            ),
       },
     );
   }

@@ -1,13 +1,14 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../models/club.dart';
 import '../../services/club_service.dart';
 import '../../utils/date_label.dart';
+import '../../widgets/bottom_nav_bar.dart';
 import 'club_detail_screen.dart';
 import 'club_form_screen.dart';
 
-/// Halaman Daftar Klub (Bab 2.2.8 poin 1). Dipakai sebagai isi tab Klub
-/// di bottom navigation, jadi tidak punya bottom nav sendiri.
+/// Halaman Daftar Klub (Bab 2.2.8 poin 1), dibuka dari menu Klub
+/// di bottom navigation (route '/klub').
 class ClubListScreen extends StatefulWidget {
   const ClubListScreen({super.key});
 
@@ -87,6 +88,7 @@ class _ClubListScreenState extends State<ClubListScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
+      bottomNavigationBar: const BottomNavBar(currentIndex: BottomNavBar.klubIndex),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openForm,
         icon: const Icon(Icons.add),
