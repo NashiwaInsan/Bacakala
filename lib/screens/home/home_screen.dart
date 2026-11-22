@@ -9,7 +9,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/avatar_circle.dart';
 import '../../widgets/book_card.dart';
 import '../../widgets/bottom_nav_bar.dart';
-import '../book/book_detail_screen.dart';
+import '../book_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
