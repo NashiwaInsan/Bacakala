@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../models/note.dart';
 import '../screens/notes/note_form_screen.dart';
@@ -7,10 +7,10 @@ import '../utils/date_label.dart';
 
 /// Isi tab Catatan di halaman Detail Buku (Bab 2.2.6 poin 1).
 ///
-/// Dipasang di BookDetailScreen, contoh:
-///   final _notesKey = GlobalKey<NoteListTabState>();
-///   NoteListTab(key: _notesKey, bookId: ..., bookTitle: ...,
-///               lastPage: ..., totalPages: ...)
+/// Dipasang di BookDetailScreen: buat GlobalKey bertipe NoteListTabState,
+/// pasang NoteListTab(key: ..., bookId: ..., bookTitle: ..., lastPage: ...,
+/// totalPages: ...), lalu panggil currentState?.reload() setelah form
+/// catatan ditutup.
 /// Setelah tombol "+ Catatan" membuka form dan kembali, panggil
 /// `_notesKey.currentState?.reload()`.
 class NoteListTab extends StatefulWidget {
@@ -298,7 +298,7 @@ class _Message extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-          if (action != null) action!,
+         ?action,
         ],
       ),
     );

@@ -3,6 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import '../services/auth_service.dart';
 import '../theme/app_theme.dart';
 
+
 /// Layar awal: cek sesi, lalu arahkan ke /home atau /login.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

@@ -1,10 +1,12 @@
 import 'package:material_ui/material_ui.dart';
 
-import '../../models/book.dart';
-import '../../services/auth_service.dart';
-import '../../services/book_service.dart';
-import '../../theme/app_theme.dart';
-import '../../widgets/progress_bar.dart';
+import 'package:bacakala/models/book.dart';
+import 'package:bacakala/screens/notes/note_form_screen.dart';
+import 'package:bacakala/services/auth_service.dart';
+import 'package:bacakala/services/book_service.dart';
+import 'package:bacakala/theme/app_theme.dart';
+import 'package:bacakala/widgets/note_list_tab.dart';
+import 'package:bacakala/widgets/progress_bar.dart';
 
 class BookDetailScreen extends StatefulWidget {
   final String bookId;
@@ -24,10 +26,14 @@ class BookDetailScreen extends StatefulWidget {
 
 class _BookDetailScreenState extends State<BookDetailScreen> {
   final _bookService = BookService();
+  final _notesKey = GlobalKey<NoteListTabState>();
 
   Book? _book;
   bool _loading = true;
   String? _error;
+
+  /// Jumlah catatan untuk label tab, diisi oleh NoteListTab.
+  int? _jumlahCatatan;
 
   @override
   void initState() {
@@ -57,6 +63,22 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(const SnackBar(content: Text('Sesi membaca segera hadir')));
+  }
+
+  /// Membuka Form Catatan, lalu memuat ulang tab Catatan jika ada perubahan.
+  Future<void> _tambahCatatan(Book book) async {
+    final hasil = await Navigator.push<NoteFormResult>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => NoteFormScreen(
+          bookId: widget.bookId,
+          bookTitle: book.judul,
+          lastPage: book.halamanTerakhir,
+          totalPages: book.totalHalaman,
+        ),
+      ),
+    );
+    if (hasil != null) _notesKey.currentState?.reload();
   }
 
   String _labelStatus(String status) {
@@ -139,26 +161,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                 const SizedBox(height: 20),
                 _buildProgressCard(book),
                 const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton.icon(
-                    onPressed: _segeraHadir,
-                    icon: const Icon(Icons.menu_book_rounded, size: 20),
-                    label: Text(
-                      book.halamanTerakhir > 0
-                          ? 'Lanjutkan Membaca'
-                          : 'Mulai Membaca',
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
+                _buildActions(book),
               ],
             ),
           ),
@@ -171,9 +174,13 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
               unselectedLabelColor: AppColors.textHint,
               indicatorColor: AppColors.primary,
               labelStyle: AppText.bodyStrong,
-              tabs: const [
-                Tab(text: 'Riwayat'),
-                Tab(text: 'Catatan'),
+              tabs: [
+                const Tab(text: 'Riwayat'),
+                Tab(
+                  text: _jumlahCatatan == null
+                      ? 'Catatan'
+                      : 'Catatan $_jumlahCatatan',
+                ),
               ],
             ),
           ),
@@ -186,13 +193,62 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
             judul: 'Belum ada riwayat membaca',
             deskripsi: 'Riwayat sesi membacamu untuk buku ini akan muncul di sini.',
           ),
-          _buildEmptyTab(
-            icon: Icons.edit_note_rounded,
-            judul: 'Belum ada catatan',
-            deskripsi: 'Simpan kutipan atau pemikiran penting saat membaca buku ini.',
+          SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+            child: NoteListTab(
+              key: _notesKey,
+              bookId: widget.bookId,
+              bookTitle: book.judul,
+              lastPage: book.halamanTerakhir,
+              totalPages: book.totalHalaman,
+              onCountChanged: (jumlah) {
+                if (mounted) setState(() => _jumlahCatatan = jumlah);
+              },
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  /// Tombol Mulai/Lanjutkan Membaca dan + Catatan (Bab 2.2.4 poin 2).
+  Widget _buildActions(Book book) {
+    final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(12));
+
+    return Row(
+      children: [
+        Expanded(
+          child: SizedBox(
+            height: 48,
+            child: ElevatedButton.icon(
+              onPressed: _segeraHadir,
+              icon: const Icon(Icons.menu_book_rounded, size: 20),
+              label: Text(
+                book.halamanTerakhir > 0 ? 'Lanjutkan Membaca' : 'Mulai Membaca',
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.white,
+                shape: shape,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        SizedBox(
+          height: 48,
+          child: OutlinedButton.icon(
+            onPressed: () => _tambahCatatan(book),
+            icon: const Icon(Icons.add, size: 20),
+            label: const Text('Catatan'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.primary,
+              side: const BorderSide(color: AppColors.primary),
+              shape: shape,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -351,6 +407,8 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
     );
   }
 
+  // Dibangun ulang agar angka di label tab Catatan ikut berubah.
   @override
-  bool shouldRebuild(covariant _TabBarDelegate oldDelegate) => false;
+  bool shouldRebuild(covariant _TabBarDelegate oldDelegate) =>
+      oldDelegate.tabBar != tabBar;
 }
