@@ -147,4 +147,17 @@ class BookService {
       throw ServiceException.from(e);
     }
   }
+  Future<Book> getBookById(String bookId) async {
+    try {
+      final data = await _client
+          .from('books')
+          .select()
+          .eq('id', bookId)
+          .single();
+
+      return Book.fromJson(data);
+    } catch (e) {
+      throw ServiceException.from(e);
+    }
+  }
 }

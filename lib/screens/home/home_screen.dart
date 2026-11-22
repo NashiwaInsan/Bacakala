@@ -9,6 +9,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/avatar_circle.dart';
 import '../../widgets/book_card.dart';
 import '../../widgets/bottom_nav_bar.dart';
+import '../book/book_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -171,7 +172,16 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         _buildHeader(),
         const SizedBox(height: 20),
-        BookCard(book: _book, onContinue: _segeraHadir),
+        BookCard(book: _book,onContinue: () {
+          if (_book == null) return;
+          Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => BookDetailScreen(bookId: _book!.id,initialBook: _book,),
+          ),
+          );
+        },
+        ),
         const SizedBox(height: 16),
         _buildTarget(target),
         const SizedBox(height: 16),
