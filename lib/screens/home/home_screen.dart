@@ -102,8 +102,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       bottomNavigationBar: BottomNavBar(
         currentIndex: 0,
-        onTap: (i) {
-          if (i == 4) {
+        onTap: (i) async {
+          if (i == 1) {
+            // Muat ulang saat kembali, supaya buku baru dari Rak ikut tampil.
+            await Navigator.pushNamed(context, '/rak');
+            if (mounted) _load();
+          } else if (i == 4) {
             Navigator.pushNamed(context, '/profile');
           } else if (i != 0) {
             _segeraHadir();

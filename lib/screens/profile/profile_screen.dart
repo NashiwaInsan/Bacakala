@@ -275,6 +275,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _onNavTap(int i) {
     if (i == 0) {
       Navigator.of(context).pushNamedAndRemoveUntil('/home', (_) => false);
+    } else if (i == 1) {
+      // Ganti halaman, bukan menumpuk: tumpukan tetap [Beranda, tab].
+      Navigator.of(context).pushReplacementNamed('/rak');
     } else if (i != 4) {
       _snack('Segera hadir');
     }

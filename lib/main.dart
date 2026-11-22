@@ -5,6 +5,8 @@ import 'screens/profile/profile_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/home/home_screen.dart';
+import 'screens/rak/rak_screen.dart';
+import 'screens/rak/tambah_buku_screen.dart';
 import 'screens/splash_screen.dart';
 import 'theme/app_theme.dart';
 
@@ -49,6 +51,8 @@ class BacakalaApp extends StatelessWidget {
         '/register': (_) => const RegisterScreen(),
         '/home': (_) => const HomeScreen(),
         '/profile': (_) => const ProfileScreen(showBottomNav: true),
+        '/rak': (_) => const RakScreen(),
+        '/rak/tambah': (_) => const TambahBukuScreen(),
       },
     );
   }
