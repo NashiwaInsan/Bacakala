@@ -1,12 +1,15 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
+import 'screens/profile/profile_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/home/home_screen.dart';
+import 'screens/rak/rak_screen.dart';
+import 'screens/rak/tambah_buku_screen.dart';
 import 'screens/splash_screen.dart';
 import 'theme/app_theme.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,6 +50,9 @@ class BacakalaApp extends StatelessWidget {
         '/login': (_) => const LoginScreen(),
         '/register': (_) => const RegisterScreen(),
         '/home': (_) => const HomeScreen(),
+        '/profile': (_) => const ProfileScreen(showBottomNav: true),
+        '/rak': (_) => const RakScreen(),
+        '/rak/tambah': (_) => const TambahBukuScreen(),
       },
     );
   }

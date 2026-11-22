@@ -12,6 +12,10 @@ class Book {
   final String? coverUrl;
   final DateTime? createdAt;
 
+  /// Kolom `tanggal_selesai`. Null jika kolomnya belum ada di database
+  /// atau buku belum selesai. Lihat [tanggalSelesaiTampil].
+  final DateTime? tanggalSelesai;
+
   const Book({
     required this.id,
     required this.userId,
@@ -22,6 +26,7 @@ class Book {
     required this.status,
     this.coverUrl,
     this.createdAt,
+    this.tanggalSelesai,
   });
 
   factory Book.fromJson(Map<String, dynamic> json) {
@@ -36,6 +41,10 @@ class Book {
       status: (json['status'] ?? 'ingin_dibaca').toString(),
       coverUrl: (cover == null || cover.trim().isEmpty) ? null : cover,
       createdAt: DateTime.tryParse((json['created_at'] ?? '').toString()),
+      // Aman walau kolomnya belum ada: hasilnya null.
+      tanggalSelesai: DateTime.tryParse(
+        (json['tanggal_selesai'] ?? '').toString(),
+      ),
     );
   }
 
@@ -59,4 +68,8 @@ class Book {
 
   /// Progres dalam persen bulat, mis. 55.
   int get persen => (progres * 100).round();
+
+  /// Tanggal yang ditampilkan untuk buku selesai: `tanggal_selesai` jika ada,
+  /// kalau belum ada (kolom belum dibuat) pakai `created_at`.
+  DateTime? get tanggalSelesaiTampil => tanggalSelesai ?? createdAt;
 }
