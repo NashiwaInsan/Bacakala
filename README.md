@@ -1,6 +1,8 @@
 <div align="center">
 
-# 📚 bacakala
+<img src="design/readme/icon.png" width="120" alt="Ikon Bacakala"/>
+
+# bacakala
 
 **Pelacak kebiasaan membaca dan klub baca untuk Android**
 
@@ -26,15 +28,11 @@ Banyak orang ingin membaca lebih rutin, tetapi kesulitan menjaga konsistensi, ti
 
 ## Tampilan
 
-<div align="center">
-
-| Login | Register | Beranda |
-|:---:|:---:|:---:|
-| <img src="design/login.png" width="230"/> | <img src="design/register.png" width="230"/> | <img src="design/beranda.png" width="230"/> |
-
-<sub>Desain dari Figma. Screenshot aplikasi akan diperbarui seiring pengembangan.</sub>
-
-</div>
+<p align="center">
+  <img src="design/readme/login.png" width="260" alt="Login"/>
+  <img src="design/readme/beranda.png" width="260" alt="Beranda"/>
+  <img src="design/readme/rak_buku.png" width="260" alt="Rak Buku"/>
+</p>
 
 ## Fitur
 
@@ -42,13 +40,13 @@ Banyak orang ingin membaca lebih rutin, tetapi kesulitan menjaga konsistensi, ti
 |---|---|:---:|
 | 🔐 Autentikasi | Daftar, masuk, dan sesi login tersimpan (Supabase Auth) | ✅ |
 | 🏠 Beranda | Buku yang sedang dibaca, target tahunan, ringkasan mingguan | 🚧 |
-| 📖 Rak Buku | Kelola buku dengan status Ingin Dibaca, Sedang Dibaca, Selesai | ⏳ |
-| 🔎 Detail Buku | Progres halaman, riwayat sesi, dan catatan per buku | ⏳ |
+| 📖 Rak Buku | Rak per status (Ingin Dibaca, Sedang Dibaca, Selesai), cari judul, tambah buku dengan sampul opsional | ✅ |
+| 🔎 Detail Buku | Progres halaman, riwayat sesi, dan catatan per buku | ✅ |
 | ⏱️ Sesi Membaca | Timer membaca dengan pembaruan progres otomatis | ⏳ |
 | 📝 Catatan & Kutipan | Simpan kutipan dan catatan pribadi beserta nomor halaman | ⏳ |
 | 📊 Statistik | Total waktu membaca, grafik mingguan, waktu membaca favorit | ⏳ |
 | 👥 Klub Baca | Baca satu buku bersama, pantau progres anggota, dan berdiskusi | ⏳ |
-| 👤 Profil | Ubah nama, target buku tahunan, dan logout | ⏳ |
+| 👤 Profil | Ringkasan buku, ubah nama dan foto, ganti kata sandi, pengingat membaca, dan logout | ✅ |
 
 <sub>✅ selesai · 🚧 sedang dikerjakan · ⏳ direncanakan</sub>
 
@@ -56,7 +54,7 @@ Banyak orang ingin membaca lebih rutin, tetapi kesulitan menjaga konsistensi, ti
 
 - **[Flutter](https://flutter.dev) & Dart**: antarmuka dan logika aplikasi
 - **[Supabase](https://supabase.com)**: PostgreSQL, autentikasi, dan Row Level Security
-- **Package utama**: `supabase_flutter`, `flutter_dotenv`, `google_fonts`
+- **Package utama**: `supabase_flutter`, `flutter_dotenv`, `google_fonts`, `image_picker`, `flutter_local_notifications`
 - **Figma**: design system, user flow, dan wireframe
 
 ## Struktur Folder
@@ -69,10 +67,13 @@ lib/
 ├── services/            # semua query ke Supabase (auth, profil, buku, ...)
 ├── screens/             # satu file per screen, dikelompokkan per fitur
 │   ├── splash_screen.dart
+│   ├── book_detail_screen.dart   # detail buku
 │   ├── auth/            # login, register
-│   └── home/            # beranda
-└── widgets/             # komponen yang dipakai ulang (kartu buku, progress bar, navbar)
-design/                  # gambar desain dari Figma
+│   ├── home/            # beranda
+│   ├── rak/             # rak buku, tambah buku
+│   └── profile/         # profil, ubah profil, kata sandi, pengingat
+└── widgets/             # komponen yang dipakai ulang (sampul buku, kartu buku, progress bar, navbar)
+design/readme/           # ikon dan tampilan aplikasi untuk README
 ```
 
 Alur data: **Screen → Service → Supabase → Model → Screen**. Screen tidak pernah memanggil Supabase secara langsung.

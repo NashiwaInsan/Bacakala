@@ -211,7 +211,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                 ? Image.network(
                     book.coverUrl!,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _coverPlaceholder(),
+                    errorBuilder: (_, _, _) => _coverPlaceholder(),
                   )
                 : _coverPlaceholder(),
           ),

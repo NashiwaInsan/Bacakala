@@ -24,6 +24,9 @@ class AppColors {
   static const shelf = Color(0xFF1F2622); // papan rak
   static const coverDefault = Color(0xFF1F4E5F); // sampul placeholder
   static const coverText = Color(0xFFF1EDE3); // teks krem di sampul
+  static const coverSpine = Color(0x2E000000); // strip gelap punggung sampul
+  static const coverShadow = Color(0x24000000); // bayangan halus sampul
+  static const coverSpineLight = Color(0x14FFFFFF); // garis terang punggung
 
   static const danger = Color(0xFFB5532C); // tombol Keluar
 
@@ -137,6 +140,24 @@ class AppText {
       _sans(12.5, AppColors.primary, weight: FontWeight.w700);
   static TextStyle get navInactive =>
       _sans(12.5, AppColors.textSecondary, weight: FontWeight.w500);
+
+  // --- Rak Buku ---
+  /// Tab status & segmented control.
+  static TextStyle get tabActive =>
+      _sans(15, AppColors.primary, weight: FontWeight.w700);
+  static TextStyle get tabInactive =>
+      _sans(15, AppColors.textSecondary, weight: FontWeight.w500);
+  static TextStyle get tabCount =>
+      _sans(15, AppColors.textHint, weight: FontWeight.w500);
+
+  /// Judul & keterangan di bawah sampul pada grid rak.
+  static TextStyle get gridTitle =>
+      _sans(15, AppColors.textPrimary, weight: FontWeight.w500, height: 1.3);
+  static TextStyle get gridCaption =>
+      _sans(13.5, AppColors.textHint, height: 1.3);
+
+  static TextStyle get appBarTitle =>
+      _sans(20, AppColors.textPrimary, weight: FontWeight.w600);
 }
 
 /// Ukuran umum yang dipakai berulang.
