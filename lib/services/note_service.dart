@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/note.dart';
@@ -13,6 +15,9 @@ class NoteService {
   final SupabaseClient _client;
 
   static const String _table = 'notes';
+
+  /// Bucket Storage untuk foto halaman (dibuat di supabase/club_functions.sql).
+  static const String _bucket = 'note-photos';
 
   String get _userId {
     final user = _client.auth.currentUser;
@@ -58,7 +63,36 @@ class NoteService {
     return Note.fromJson(row);
   }
 
-  Future<void> deleteNote(String id) async {
+  /// Menghapus catatan beserta foto halamannya (jika ada).
+  Future<void> deleteNote(String id, {String? fotoUrl}) async {
     await _client.from(_table).delete().eq('id', id);
+    if (fotoUrl != null) await deletePhoto(fotoUrl);
+  }
+
+  /// Mengunggah foto halaman dan mengembalikan link publiknya.
+  /// File disimpan di folder milik pengguna: `<user_id>/<waktu>.<ext>`.
+  Future<String> uploadPhoto(Uint8List bytes, {String extension = 'jpg'}) async {
+    final ext = extension.toLowerCase() == 'png' ? 'png' : 'jpg';
+    final path = '$_userId/${DateTime.now().millisecondsSinceEpoch}.$ext';
+    await _client.storage.from(_bucket).uploadBinary(
+          path,
+          bytes,
+          fileOptions: FileOptions(contentType: 'image/${ext == 'png' ? 'png' : 'jpeg'}'),
+        );
+    return _client.storage.from(_bucket).getPublicUrl(path);
+  }
+
+  /// Menghapus foto dari Storage. Gagal menghapus foto tidak dianggap
+  /// error, karena catatannya sendiri sudah tersimpan atau terhapus.
+  Future<void> deletePhoto(String fotoUrl) async {
+    final marker = '/$_bucket/';
+    final index = fotoUrl.indexOf(marker);
+    if (index < 0) return;
+    final path = Uri.decodeComponent(fotoUrl.substring(index + marker.length));
+    try {
+      await _client.storage.from(_bucket).remove([path]);
+    } catch (_) {
+      // Foto yang tertinggal tidak mengganggu fitur, cukup diabaikan.
+    }
   }
 }

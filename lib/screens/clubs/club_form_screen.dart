@@ -6,13 +6,17 @@ import '../../services/club_service.dart';
 import '../../utils/date_label.dart';
 import 'club_detail_screen.dart';
 
-/// Form Buat Klub (Bab 2.2.8 poin 2).
+/// Form Buat Klub dan Ubah Klub (Bab 2.2.8 poin 2).
 ///
-/// Mengembalikan `true` lewat Navigator.pop jika klub berhasil dibuat
-/// tetapi pengguna tidak langsung membuka klub, supaya Daftar Klub
-/// memuat ulang datanya.
+/// Buat klub: `ClubFormScreen()`. Setelah tersimpan, panel kode undangan
+/// muncul.
+/// Ubah klub: `ClubFormScreen(club: club)`. Setelah tersimpan, form ditutup
+/// dan mengembalikan [Club] yang sudah diperbarui lewat Navigator.pop.
 class ClubFormScreen extends StatefulWidget {
-  const ClubFormScreen({super.key});
+  const ClubFormScreen({super.key, this.club});
+
+  /// Diisi saat mengubah klub. `null` berarti klub baru.
+  final Club? club;
 
   @override
   State<ClubFormScreen> createState() => _ClubFormScreenState();
@@ -33,10 +37,27 @@ class _ClubFormScreenState extends State<ClubFormScreen> {
   bool _targetError = false;
   bool _isSaving = false;
 
+  bool get _isEditing => widget.club != null;
+
   @override
   void initState() {
     super.initState();
     _booksFuture = _clubService.getBookOptions();
+
+    final club = widget.club;
+    if (club != null) {
+      _namaController.text = club.nama;
+      _deskripsiController.text = club.deskripsi;
+      _target = club.targetSelesai;
+      // Jumlah halaman buku klub tidak disimpan, jadi perkiraan halaman
+      // per hari baru muncul jika pengguna memilih ulang buku dari rak.
+      _book = ClubBookOption(
+        judul: club.judulBuku,
+        penulis: '',
+        totalHalaman: 0,
+        halamanTerakhir: 0,
+      );
+    }
   }
 
   @override
@@ -56,7 +77,7 @@ class _ClubFormScreenState extends State<ClubFormScreen> {
     final book = _book;
     if (days == null || days <= 0) return null;
     final base = '$days hari lagi';
-    if (book == null) return base;
+    if (book == null || book.totalHalaman <= 0) return base;
     final perDay = (book.totalHalaman / days).ceil();
     return '$base · sekitar $perDay halaman per hari';
   }
@@ -79,10 +100,12 @@ class _ClubFormScreenState extends State<ClubFormScreen> {
 
   Future<void> _pickTarget() async {
     final today = DateLabel.dateOnly(DateTime.now());
+    final firstDate = today.add(const Duration(days: 1));
+    final current = _target ?? today.add(const Duration(days: 30));
     final picked = await showDatePicker(
       context: context,
-      initialDate: _target ?? today.add(const Duration(days: 30)),
-      firstDate: today.add(const Duration(days: 1)),
+      initialDate: current.isBefore(firstDate) ? firstDate : current,
+      firstDate: firstDate,
       lastDate: today.add(const Duration(days: 365)),
       helpText: 'Target selesai',
     );
@@ -104,6 +127,18 @@ class _ClubFormScreenState extends State<ClubFormScreen> {
 
     setState(() => _isSaving = true);
     try {
+      if (_isEditing) {
+        final updated = await _clubService.updateClub(
+          clubId: widget.club!.id,
+          nama: _namaController.text.trim(),
+          deskripsi: _deskripsiController.text.trim(),
+          judulBuku: _book!.judul,
+          targetSelesai: _target!,
+        );
+        if (mounted) Navigator.pop(context, updated);
+        return;
+      }
+
       final club = await _clubService.createClub(
         nama: _namaController.text.trim(),
         deskripsi: _deskripsiController.text.trim(),
@@ -115,7 +150,11 @@ class _ClubFormScreenState extends State<ClubFormScreen> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Klub gagal dibuat. Cek koneksi lalu coba lagi.')),
+        SnackBar(
+          content: Text(_isEditing
+              ? 'Perubahan gagal disimpan. Cek koneksi lalu coba lagi.'
+              : 'Klub gagal dibuat. Cek koneksi lalu coba lagi.'),
+        ),
       );
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -153,7 +192,7 @@ class _ClubFormScreenState extends State<ClubFormScreen> {
           tooltip: 'Tutup',
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Buat klub'),
+        title: Text(_isEditing ? 'Ubah klub' : 'Buat klub'),
       ),
       body: Form(
         key: _formKey,
@@ -198,8 +237,12 @@ class _ClubFormScreenState extends State<ClubFormScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(_book!.judul, style: theme.textTheme.titleSmall),
-                        Text('Dari rak kamu · ${_book!.totalHalaman} halaman',
-                            style: theme.textTheme.bodySmall),
+                        Text(
+                          _book!.totalHalaman > 0
+                              ? 'Dari rak kamu · ${_book!.totalHalaman} halaman'
+                              : 'Ketuk untuk mengganti buku',
+                          style: theme.textTheme.bodySmall,
+                        ),
                       ],
                     ),
             ),
@@ -235,11 +278,13 @@ class _ClubFormScreenState extends State<ClubFormScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'Kode undangan dibuat otomatis setelah klub disimpan.',
-              style: theme.textTheme.bodySmall,
-            ),
-            const SizedBox(height: 10),
+            if (!_isEditing) ...[
+              Text(
+                'Kode undangan dibuat otomatis setelah klub disimpan.',
+                style: theme.textTheme.bodySmall,
+              ),
+              const SizedBox(height: 10),
+            ],
             FilledButton(
               onPressed: _isSaving ? null : _save,
               style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
@@ -248,7 +293,7 @@ class _ClubFormScreenState extends State<ClubFormScreen> {
                       dimension: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Text('Buat klub'),
+                  : Text(_isEditing ? 'Simpan perubahan' : 'Buat klub'),
             ),
           ],
         ),
@@ -422,6 +467,7 @@ class _ClubCreatedSheet extends StatelessWidget {
                     ),
                   ),
                   OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(minimumSize: const Size(0, 40)),
                     onPressed: () => _copy(context, club.kodeUndangan, 'Kode disalin'),
                     icon: const Icon(Icons.copy, size: 16),
                     label: const Text('Salin'),

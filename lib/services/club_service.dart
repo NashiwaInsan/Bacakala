@@ -138,5 +138,39 @@ class ClubService {
     return ClubPost.fromJson(row);
   }
 
+  /// Mengubah data klub. Hanya owner yang diizinkan (dicek di database).
+  Future<Club> updateClub({
+    required String clubId,
+    required String nama,
+    required String deskripsi,
+    required String judulBuku,
+    required DateTime targetSelesai,
+  }) async {
+    final row = await _client.rpc('update_club', params: {
+      'p_club_id': clubId,
+      'p_nama': nama,
+      'p_deskripsi': deskripsi,
+      'p_judul_buku': judulBuku,
+      'p_target_selesai': DateLabel.isoDate(targetSelesai),
+    });
+    return Club.fromJson(Map<String, dynamic>.from(row as Map));
+  }
+
+  /// Menghapus klub beserta anggota dan diskusinya. Hanya owner.
+  Future<void> deleteClub(String clubId) async {
+    await _client.rpc('delete_club', params: {'p_club_id': clubId});
+  }
+
+  /// Keluar dari klub (untuk anggota selain owner).
+  Future<void> leaveClub(String clubId) async {
+    await _client.rpc('leave_club', params: {'p_club_id': clubId});
+  }
+
+  /// Menghapus postingan diskusi milik sendiri (owner klub boleh
+  /// menghapus postingan siapa pun di klubnya).
+  Future<void> deletePost(String postId) async {
+    await _client.rpc('delete_club_post', params: {'p_post_id': postId});
+  }
+
   String get currentUserId => _userId;
 }

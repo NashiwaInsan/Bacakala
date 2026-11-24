@@ -37,7 +37,8 @@ class _StatsScreenState extends State<StatsScreen> {
   }
 
   void _changePeriod(StatsPeriod period) {
-    _period = period;
+    if (period == _period) return;
+    setState(() => _period = period);
     _reload();
   }
 
@@ -58,15 +59,9 @@ class _StatsScreenState extends State<StatsScreen> {
                   Expanded(
                     child: Text('Statistik', style: theme.textTheme.headlineMedium),
                   ),
-                  SegmentedButton<StatsPeriod>(
-                    segments: [
-                      for (final p in StatsPeriod.values)
-                        ButtonSegment(value: p, label: Text(p.label)),
-                    ],
-                    selected: {_period},
-                    showSelectedIcon: false,
-                    style: const ButtonStyle(visualDensity: VisualDensity.compact),
-                    onSelectionChanged: (s) => _changePeriod(s.first),
+                  _PeriodToggle(
+                    selected: _period,
+                    onChanged: _changePeriod,
                   ),
                 ],
               ),
@@ -93,6 +88,55 @@ class _StatsScreenState extends State<StatsScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Pilihan Minggu / Bulan / Tahun berbentuk pil, sesuai desain Figma.
+/// Dibuat tanpa widget tombol bawaan supaya tidak terpengaruh ukuran
+/// tombol dari tema aplikasi.
+class _PeriodToggle extends StatelessWidget {
+  const _PeriodToggle({required this.selected, required this.onChanged});
+
+  final StatsPeriod selected;
+  final ValueChanged<StatsPeriod> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.outlineVariant),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final p in StatsPeriod.values)
+            Material(
+              color: p == selected ? colors.primary : Colors.transparent,
+              borderRadius: BorderRadius.circular(17),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(17),
+                onTap: () => onChanged(p),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                  child: Text(
+                    p.label,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: p == selected ? colors.onPrimary : colors.onSurface,
+                      fontWeight: p == selected ? FontWeight.w600 : null,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

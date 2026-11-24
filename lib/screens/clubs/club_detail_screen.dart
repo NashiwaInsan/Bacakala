@@ -5,6 +5,10 @@ import '../../models/club.dart';
 import '../../models/club_post.dart';
 import '../../services/club_service.dart';
 import '../../utils/date_label.dart';
+import 'club_form_screen.dart';
+
+/// Aksi di menu titik tiga Detail Klub.
+enum _ClubAction { ubah, hapus, keluar }
 
 /// Halaman Detail Klub (Bab 2.2.8 poin 3): buku bersama, progres
 /// anggota, dan ruang diskusi.
@@ -27,11 +31,15 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
   bool _hasError = false;
   bool _isSending = false;
 
-  Club get club => widget.club;
+  /// Disalin dari widget supaya bisa diganti setelah klub diubah.
+  late Club club;
+
+  bool get _isOwner => club.ownerId == _clubService.currentUserId;
 
   @override
   void initState() {
     super.initState();
+    club = widget.club;
     _load();
   }
 
@@ -81,6 +89,108 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
     }
   }
 
+  void _showMessage(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  }
+
+  /// Dialog konfirmasi standar; mengembalikan true jika pengguna setuju.
+  Future<bool> _confirm({
+    required String title,
+    required String message,
+    required String action,
+  }) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        final colors = Theme.of(context).colorScheme;
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Batal'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: colors.error,
+                foregroundColor: colors.onError,
+                minimumSize: const Size(0, 40),
+              ),
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(action),
+            ),
+          ],
+        );
+      },
+    );
+    return ok == true;
+  }
+
+  Future<void> _onAction(_ClubAction action) async {
+    switch (action) {
+      case _ClubAction.ubah:
+        final updated = await Navigator.push<Club>(
+          context,
+          MaterialPageRoute(builder: (_) => ClubFormScreen(club: club)),
+        );
+        if (updated != null && mounted) {
+          setState(() => club = updated);
+          _showMessage('Klub diperbarui');
+          _load();
+        }
+      case _ClubAction.hapus:
+        final ok = await _confirm(
+          title: 'Hapus klub ini?',
+          message: '${club.nama} beserta semua anggota dan diskusinya akan '
+              'dihapus permanen.',
+          action: 'Hapus',
+        );
+        if (!ok) return;
+        await _leavePage(
+          () => _clubService.deleteClub(club.id),
+          'Klub gagal dihapus. Coba lagi.',
+        );
+      case _ClubAction.keluar:
+        final ok = await _confirm(
+          title: 'Keluar dari klub?',
+          message: 'Kamu bisa bergabung lagi nanti dengan kode '
+              '${club.kodeUndangan}.',
+          action: 'Keluar',
+        );
+        if (!ok) return;
+        await _leavePage(
+          () => _clubService.leaveClub(club.id),
+          'Gagal keluar dari klub. Coba lagi.',
+        );
+    }
+  }
+
+  /// Menjalankan hapus/keluar, lalu kembali ke Daftar Klub.
+  Future<void> _leavePage(Future<void> Function() action, String errorText) async {
+    try {
+      await action();
+      if (mounted) Navigator.pop(context, true);
+    } catch (_) {
+      if (mounted) _showMessage(errorText);
+    }
+  }
+
+  Future<void> _deletePost(ClubPost post) async {
+    final ok = await _confirm(
+      title: 'Hapus pesan ini?',
+      message: 'Pesan akan dihapus dari diskusi klub.',
+      action: 'Hapus',
+    );
+    if (!ok) return;
+    try {
+      await _clubService.deletePost(post.id);
+      if (mounted) setState(() => _posts = _posts.where((p) => p.id != post.id).toList());
+    } catch (_) {
+      if (mounted) _showMessage('Pesan gagal dihapus. Coba lagi.');
+    }
+  }
+
   void _copyCode() {
     Clipboard.setData(ClipboardData(text: club.kodeUndangan));
     ScaffoldMessenger.of(context).showSnackBar(
@@ -94,7 +204,23 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
     final myId = _clubService.currentUserId;
 
     return Scaffold(
-      appBar: AppBar(title: Text(club.nama)),
+      appBar: AppBar(
+        title: Text(club.nama),
+        actions: [
+          PopupMenuButton<_ClubAction>(
+            tooltip: 'Menu klub',
+            onSelected: _onAction,
+            itemBuilder: (context) => _isOwner
+                ? const [
+                    PopupMenuItem(value: _ClubAction.ubah, child: Text('Ubah klub')),
+                    PopupMenuItem(value: _ClubAction.hapus, child: Text('Hapus klub')),
+                  ]
+                : const [
+                    PopupMenuItem(value: _ClubAction.keluar, child: Text('Keluar dari klub')),
+                  ],
+          ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
@@ -133,7 +259,15 @@ class _ClubDetailScreenState extends State<ClubDetailScreen> {
                 )
               else
                 for (final post in _posts) ...[
-                  _PostTile(post: post, isMine: post.userId == myId),
+                  _PostTile(
+                    post: post,
+                    isMine: post.userId == myId,
+                    // Tekan lama untuk menghapus: pesan sendiri, atau semua
+                    // pesan jika pengguna owner klub.
+                    onLongPress: post.userId == myId || _isOwner
+                        ? () => _deletePost(post)
+                        : null,
+                  ),
                   const SizedBox(height: 16),
                 ],
             ],
@@ -208,6 +342,7 @@ class _SharedBookCard extends StatelessWidget {
                 OutlinedButton.icon(
                   onPressed: onCopyCode,
                   style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 36),
                     visualDensity: VisualDensity.compact,
                     backgroundColor: colors.surface,
                   ),
@@ -291,14 +426,23 @@ class _MemberProgressCard extends StatelessWidget {
 }
 
 class _PostTile extends StatelessWidget {
-  const _PostTile({required this.post, required this.isMine});
+  const _PostTile({required this.post, required this.isMine, this.onLongPress});
 
   final ClubPost post;
   final bool isMine;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    return InkWell(
+      onLongPress: onLongPress,
+      borderRadius: BorderRadius.circular(8),
+      child: _content(theme),
+    );
+  }
+
+  Widget _content(ThemeData theme) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
