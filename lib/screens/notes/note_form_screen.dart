@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../models/note.dart';
 import '../../services/note_service.dart';
@@ -55,6 +58,16 @@ class _NoteFormScreenState extends State<NoteFormScreen> {
   late NoteType _jenis;
   bool _isBusy = false;
 
+  /// Foto baru yang dipilih tetapi belum diunggah.
+  Uint8List? _photoBytes;
+  String _photoExt = 'jpg';
+
+  /// Link foto yang sudah tersimpan (mode ubah). Dikosongkan jika
+  /// pengguna menghapus foto.
+  String? _fotoUrl;
+
+  bool get _hasPhoto => _photoBytes != null || _fotoUrl != null;
+
   bool get _isEditing => widget.note != null;
 
   @override
@@ -62,6 +75,7 @@ class _NoteFormScreenState extends State<NoteFormScreen> {
     super.initState();
     final note = widget.note;
     _jenis = note?.jenis ?? widget.initialType;
+    _fotoUrl = note?.fotoUrl;
     _isiController = TextEditingController(text: note?.isi ?? '');
     _halamanController = TextEditingController(
       text: '${note?.halaman ?? widget.lastPage}',
@@ -94,18 +108,30 @@ class _NoteFormScreenState extends State<NoteFormScreen> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final draft = Note(
-      id: widget.note?.id,
-      bookId: widget.bookId,
-      halaman: int.parse(_halamanController.text),
-      jenis: _jenis,
-      isi: _isiController.text.trim(),
-      createdAt: widget.note?.createdAt,
-    );
-
     await _run(() async {
+      // Foto baru diunggah dulu supaya link-nya ikut tersimpan di catatan.
+      var fotoUrl = _fotoUrl;
+      if (_photoBytes != null) {
+        fotoUrl = await _noteService.uploadPhoto(_photoBytes!, extension: _photoExt);
+      }
+
+      final draft = Note(
+        id: widget.note?.id,
+        bookId: widget.bookId,
+        halaman: int.parse(_halamanController.text),
+        jenis: _jenis,
+        isi: _isiController.text.trim(),
+        fotoUrl: fotoUrl,
+        createdAt: widget.note?.createdAt,
+      );
+
       if (_isEditing) {
         await _noteService.updateNote(draft);
+        // Foto lama dihapus dari Storage jika diganti atau dibuang.
+        final oldUrl = widget.note!.fotoUrl;
+        if (oldUrl != null && oldUrl != fotoUrl) {
+          await _noteService.deletePhoto(oldUrl);
+        }
       } else {
         await _noteService.addNote(draft);
       }
@@ -141,7 +167,10 @@ class _NoteFormScreenState extends State<NoteFormScreen> {
     if (confirmed != true) return;
 
     await _run(() async {
-      await _noteService.deleteNote(widget.note!.id!);
+      await _noteService.deleteNote(
+        widget.note!.id!,
+        fotoUrl: widget.note!.fotoUrl,
+      );
       if (mounted) Navigator.pop(context, NoteFormResult.deleted);
     });
   }
@@ -164,10 +193,59 @@ class _NoteFormScreenState extends State<NoteFormScreen> {
     }
   }
 
-  void _showPhotoComingSoon() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Foto halaman segera hadir.')),
+  /// Pilih sumber foto (kamera atau galeri), lalu simpan sementara
+  /// di memori sampai catatan disimpan.
+  Future<void> _pickPhoto() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('Ambil dari kamera'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Pilih dari galeri'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
     );
+    if (source == null) return;
+
+    try {
+      final file = await ImagePicker().pickImage(
+        source: source,
+        maxWidth: 1600,
+        imageQuality: 80,
+      );
+      if (file == null) return;
+      final bytes = await file.readAsBytes();
+      final name = file.name.toLowerCase();
+      if (!mounted) return;
+      setState(() {
+        _photoBytes = bytes;
+        _photoExt = name.endsWith('.png') ? 'png' : 'jpg';
+      });
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Foto gagal dibuka. Coba pilih foto lain.')),
+      );
+    }
+  }
+
+  void _removePhoto() {
+    setState(() {
+      _photoBytes = null;
+      _fotoUrl = null;
+    });
   }
 
   @override
@@ -258,13 +336,22 @@ class _NoteFormScreenState extends State<NoteFormScreen> {
                 SizedBox(
                   height: 56,
                   child: OutlinedButton.icon(
-                    onPressed: _showPhotoComingSoon,
+                    style: OutlinedButton.styleFrom(minimumSize: const Size(0, 56)),
+                    onPressed: _isBusy ? null : _pickPhoto,
                     icon: const Icon(Icons.photo_camera_outlined),
-                    label: const Text('Foto halaman'),
+                    label: Text(_hasPhoto ? 'Ganti foto' : 'Foto halaman'),
                   ),
                 ),
               ],
             ),
+            if (_hasPhoto) ...[
+              const SizedBox(height: 12),
+              _PhotoPreview(
+                bytes: _photoBytes,
+                url: _fotoUrl,
+                onRemove: _isBusy ? null : _removePhoto,
+              ),
+            ],
           ],
         ),
       ),
@@ -324,6 +411,52 @@ class _BookReference extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Pratinjau foto halaman di form, dengan tombol hapus di pojok.
+class _PhotoPreview extends StatelessWidget {
+  const _PhotoPreview({this.bytes, this.url, this.onRemove});
+
+  final Uint8List? bytes;
+  final String? url;
+  final VoidCallback? onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final image = bytes != null
+        ? Image.memory(bytes!, fit: BoxFit.cover)
+        : Image.network(
+            url!,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => Center(
+              child: Icon(Icons.broken_image_outlined, color: colors.outline),
+            ),
+          );
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: SizedBox(
+        height: 180,
+        width: double.infinity,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            image,
+            Positioned(
+              top: 8,
+              right: 8,
+              child: IconButton.filledTonal(
+                tooltip: 'Hapus foto',
+                onPressed: onRemove,
+                icon: const Icon(Icons.close, size: 18),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

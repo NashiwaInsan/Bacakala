@@ -75,12 +75,14 @@ class _ClubListScreenState extends State<ClubListScreen> {
     _reload();
   }
 
+  /// Daftar selalu dimuat ulang setelah kembali dari form, termasuk saat
+  /// pengguna menekan Buka klub (form diganti oleh Detail Klub).
   Future<void> _openForm() async {
-    final changed = await Navigator.push<bool>(
+    await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const ClubFormScreen()),
     );
-    if (changed == true) _reload();
+    if (mounted) _reload();
   }
 
   @override
@@ -219,6 +221,9 @@ class _JoinCard extends StatelessWidget {
                   style: FilledButton.styleFrom(
                     backgroundColor: colors.surface,
                     foregroundColor: colors.primary,
+                    // Lebar eksplisit: tombol di dalam Row tidak boleh ikut
+                    // lebar tak terbatas dari tema.
+                    minimumSize: const Size(88, 48),
                   ),
                   child: isLoading
                       ? const SizedBox.square(

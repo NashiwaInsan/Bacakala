@@ -242,6 +242,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
             icon: const Icon(Icons.add, size: 20),
             label: const Text('Catatan'),
             style: OutlinedButton.styleFrom(
+              minimumSize: const Size(0, 48),
               foregroundColor: AppColors.primary,
               side: const BorderSide(color: AppColors.primary),
               shape: shape,

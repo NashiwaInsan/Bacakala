@@ -11,8 +11,6 @@ import '../utils/date_label.dart';
 /// pasang NoteListTab(key: ..., bookId: ..., bookTitle: ..., lastPage: ...,
 /// totalPages: ...), lalu panggil currentState?.reload() setelah form
 /// catatan ditutup.
-/// Setelah tombol "+ Catatan" membuka form dan kembali, panggil
-/// `_notesKey.currentState?.reload()`.
 class NoteListTab extends StatefulWidget {
   const NoteListTab({
     super.key,
@@ -218,6 +216,10 @@ class _QuoteCard extends StatelessWidget {
                           height: 1.5,
                         ),
                       ),
+                      if (note.fotoUrl != null) ...[
+                        const SizedBox(height: 10),
+                        _NotePhoto(url: note.fotoUrl!),
+                      ],
                       const SizedBox(height: 10),
                       Text('Kutipan$date', style: theme.textTheme.labelSmall),
                     ],
@@ -269,6 +271,10 @@ class _PersonalNoteCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(note.isi, style: theme.textTheme.bodyMedium),
+              if (note.fotoUrl != null) ...[
+                const SizedBox(height: 10),
+                _NotePhoto(url: note.fotoUrl!),
+              ],
               if (note.createdAt != null) ...[
                 const SizedBox(height: 8),
                 Text(DateLabel.dayMonth(note.createdAt!), style: theme.textTheme.bodySmall),
@@ -298,8 +304,65 @@ class _Message extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-         ?action,
+          ?action,
         ],
+      ),
+    );
+  }
+}
+
+/// Foto halaman kecil di kartu catatan. Ketuk untuk melihat ukuran penuh.
+class _NotePhoto extends StatelessWidget {
+  const _NotePhoto({required this.url});
+
+  final String url;
+
+  void _openFull(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.all(16),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          children: [
+            InteractiveViewer(
+              maxScale: 4,
+              child: Image.network(url, fit: BoxFit.contain),
+            ),
+            Positioned(
+              top: 8,
+              right: 8,
+              child: IconButton.filledTonal(
+                tooltip: 'Tutup',
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return GestureDetector(
+      onTap: () => _openFull(context),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: SizedBox(
+          height: 120,
+          width: double.infinity,
+          child: Image.network(
+            url,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => ColoredBox(
+              color: colors.surfaceContainerHighest,
+              child: Icon(Icons.broken_image_outlined, color: colors.outline),
+            ),
+          ),
+        ),
       ),
     );
   }

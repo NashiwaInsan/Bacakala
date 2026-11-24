@@ -25,6 +25,7 @@ class Note {
     required this.halaman,
     required this.jenis,
     required this.isi,
+    this.fotoUrl,
     this.createdAt,
   });
 
@@ -37,6 +38,9 @@ class Note {
   final int halaman;
   final NoteType jenis;
   final String isi;
+
+  /// Link publik foto halaman di Supabase Storage, `null` jika tanpa foto.
+  final String? fotoUrl;
   final DateTime? createdAt;
 
   bool get isKutipan => jenis == NoteType.kutipan;
@@ -48,6 +52,7 @@ class Note {
       halaman: json['halaman'] as int,
       jenis: NoteType.fromValue(json['jenis'] as String),
       isi: json['isi'] as String,
+      fotoUrl: json['foto_url'] as String?,
       createdAt: json['created_at'] == null
           ? null
           : DateTime.parse(json['created_at'] as String),
@@ -63,16 +68,18 @@ class Note {
       'halaman': halaman,
       'jenis': jenis.value,
       'isi': isi,
+      'foto_url': fotoUrl,
     };
   }
 
-  Note copyWith({int? halaman, NoteType? jenis, String? isi}) {
+  Note copyWith({int? halaman, NoteType? jenis, String? isi, String? fotoUrl}) {
     return Note(
       id: id,
       bookId: bookId,
       halaman: halaman ?? this.halaman,
       jenis: jenis ?? this.jenis,
       isi: isi ?? this.isi,
+      fotoUrl: fotoUrl ?? this.fotoUrl,
       createdAt: createdAt,
     );
   }

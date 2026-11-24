@@ -6,6 +6,7 @@ import '../../services/book_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/book_cover.dart';
 import '../../widgets/bottom_nav_bar.dart';
+import '../book_detail_screen.dart';
 import 'tambah_buku_screen.dart' show TambahBukuHasil;
 
 /// Status buku di rak: (nilai di database, label di layar).
@@ -88,6 +89,17 @@ class _RakScreenState extends State<RakScreen> {
     await _load();
   }
 
+  /// Buka Detail Buku, lalu muat ulang rak karena progres atau catatan
+  /// bisa berubah dari sana.
+  Future<void> _bukaDetail(Book b) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => BookDetailScreen(bookId: b.id, initialBook: b),
+      ),
+    );
+    if (mounted) await _load();
+  }
+
   void _onNavTap(int i) {
     switch (i) {
       case 0:
@@ -97,6 +109,7 @@ class _RakScreenState extends State<RakScreen> {
       case 4:
         Navigator.of(context).pushReplacementNamed('/profile');
       default:
+        // Klub (2) dan Statistik (3) ditangani langsung oleh BottomNavBar.
         _snack('Segera hadir');
     }
   }
@@ -433,9 +446,7 @@ class _RakScreenState extends State<RakScreen> {
       children: [
         BookCover(
           book: b,
-          onTap: () {
-            // TODO: buka detail buku (di luar cakupan PRD rak buku)
-          },
+          onTap: () => _bukaDetail(b),
         ),
         const SizedBox(height: 10),
         Text(
