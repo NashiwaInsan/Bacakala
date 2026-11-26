@@ -7,6 +7,7 @@ import 'package:bacakala/services/book_service.dart';
 import 'package:bacakala/theme/app_theme.dart';
 import 'package:bacakala/widgets/note_list_tab.dart';
 import 'package:bacakala/widgets/progress_bar.dart';
+import 'package:bacakala/screens/session/reading_session_screen.dart';
 
 class BookDetailScreen extends StatefulWidget {
   final String bookId;
@@ -59,11 +60,17 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     }
   }
 
-  void _segeraHadir() {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(content: Text('Sesi membaca segera hadir')));
+  Future<void> _mulaiMembaca(Book book) async {
+  final tersimpan = await Navigator.push<bool>(
+    context,
+    MaterialPageRoute(
+      builder: (_) => ReadingSessionScreen(book: book),
+    ),
+  );
+  if (tersimpan == true) {
+    _loadBook();
   }
+}
 
   /// Membuka Form Catatan, lalu memuat ulang tab Catatan jika ada perubahan.
   Future<void> _tambahCatatan(Book book) async {
@@ -221,7 +228,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
           child: SizedBox(
             height: 48,
             child: ElevatedButton.icon(
-              onPressed: _segeraHadir,
+              onPressed: () => _mulaiMembaca(book),
               icon: const Icon(Icons.menu_book_rounded, size: 20),
               label: Text(
                 book.halamanTerakhir > 0 ? 'Lanjutkan Membaca' : 'Mulai Membaca',
